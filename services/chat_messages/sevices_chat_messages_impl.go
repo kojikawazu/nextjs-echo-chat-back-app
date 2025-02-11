@@ -6,7 +6,7 @@ import (
 
 // ChatMessagesServiceインターフェース
 type ChatMessagesService interface {
-	FetchChatMessagesInRoom(id string) ([]map[string]string, error)
+	FetchChatMessagesInRoom(roomId string) ([]map[string]interface{}, error)
 }
 
 // ChatMessagesServiceImpl は ChatMessagesService の実装

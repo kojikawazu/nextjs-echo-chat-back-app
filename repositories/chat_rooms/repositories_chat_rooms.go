@@ -67,8 +67,8 @@ func (r *ChatRoomsRepositoryImpl) FetchChatRooms() ([]models.ChatRooms, error) {
 }
 
 // FetchUsersInRoom は `chat_rooms` テーブルと `users` テーブルを結合して、チャットルーム情報とユーザー情報を取得する。
-func (r *ChatRoomsRepositoryImpl) FetchUsersInRoom(id string) ([]map[string]string, error) {
-	if id == "" {
+func (r *ChatRoomsRepositoryImpl) FetchUsersInRoom(roomId string) ([]map[string]string, error) {
+	if roomId == "" {
 		return nil, errors.New("id is required")
 	}
 
@@ -78,12 +78,12 @@ func (r *ChatRoomsRepositoryImpl) FetchUsersInRoom(id string) ([]map[string]stri
 		JOIN auth_users u ON ru.user_id = u.id
 		WHERE ru.room_id = $1
 	`
-	rows, err := middlewares.Pool.Query(middlewares.Ctx, query, id)
+	rows, err := middlewares.Pool.Query(middlewares.Ctx, query, roomId)
 	if err != nil {
 		logger.ErrorLog.Printf("Failed to fetch chat_rooms: %v", err)
 		return nil, err
 	}
-
+	defer rows.Close()
 	var users []map[string]string
 
 	for rows.Next() {
@@ -112,4 +112,49 @@ func (r *ChatRoomsRepositoryImpl) FetchUsersInRoom(id string) ([]map[string]stri
 	logger.InfoLog.Printf("Fetched %d users", len(users))
 	logger.InfoLog.Println("Fetched users successfully")
 	return users, nil
+}
+
+// CreateRoom は `chat_rooms` テーブルに新しいチャットルームを作成する。
+func (r *ChatRoomsRepositoryImpl) CreateRoom(roomName string) (string, error) {
+	if roomName == "" {
+		return "", errors.New("room name is required")
+	}
+
+	query := `
+		INSERT INTO chat_rooms (name) 
+		VALUES ($1) 
+		RETURNING id
+	`
+
+	// トランザクション開始
+	tx, err := middlewares.Pool.Begin(middlewares.Ctx)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to begin transaction: %v", err)
+		return "", err
+	}
+	defer func() {
+		// ロールバック
+		if r := recover(); r != nil {
+			tx.Rollback(middlewares.Ctx)
+		}
+	}()
+	// トランザクションのロールバックを `defer` で設定（Commit された場合は無視される）
+	defer tx.Rollback(middlewares.Ctx)
+
+	// `QueryRow` を使用して 1 つの値を取得
+	var roomID string
+	err = tx.QueryRow(middlewares.Ctx, query, roomName).Scan(&roomID)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to create room: %v", err)
+		return "", err
+	}
+
+	// コミット
+	if err := tx.Commit(middlewares.Ctx); err != nil {
+		logger.ErrorLog.Printf("Failed to commit transaction: %v", err)
+		return "", err
+	}
+
+	logger.InfoLog.Printf("Created room with ID: %s", roomID)
+	return roomID, nil
 }

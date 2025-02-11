@@ -8,7 +8,8 @@ import (
 // ChatRoomsServiceインターフェース
 type ChatRoomsService interface {
 	FetchChatRooms() ([]models.ChatRooms, error)
-	FetchUsersInRoom(id string) ([]map[string]string, error)
+	FetchUsersInRoom(roomId string) ([]map[string]string, error)
+	CreateRoom(roomName string) (string, error)
 }
 
 // ChatRoomsServiceImpl は ChatRoomsService の実装

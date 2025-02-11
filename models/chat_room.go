@@ -11,3 +11,7 @@ type ChatRooms struct {
 	UpdatedAt time.Time       `json:"updated_at"`
 	Users     []MiniAuthUsers `json:"users"`
 }
+
+type CreateRoomRequest struct {
+	RoomName string `json:"room_name"`
+}
