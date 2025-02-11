@@ -7,19 +7,19 @@ import (
 )
 
 // FetchChatMessagesInRoom は `chat_messages` テーブルと `users` テーブルを結合して、チャットメッセージ情報とユーザー情報を取得する。
-func (s *ChatMessagesServiceImpl) FetchChatMessagesInRoom(id string) ([]map[string]string, error) {
+func (s *ChatMessagesServiceImpl) FetchChatMessagesInRoom(roomId string) ([]map[string]interface{}, error) {
 	// idが空の場合はエラー
-	if id == "" {
+	if roomId == "" {
 		logger.ErrorLog.Printf("id is required")
 		return nil, errors.New("id is required")
 	}
 	// UUIDかどうかを確認
-	if !utils_uuid.IsUUID(id) {
+	if !utils_uuid.IsUUID(roomId) {
 		logger.ErrorLog.Printf("invalid id")
 		return nil, errors.New("invalid id")
 	}
 
-	chatMessages, err := s.ChatMessagesRepository.FetchChatMessagesInRoom(id)
+	chatMessages, err := s.ChatMessagesRepository.FetchChatMessagesInRoom(roomId)
 	if err != nil {
 		return nil, err
 	}

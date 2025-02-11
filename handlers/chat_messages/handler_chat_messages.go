@@ -8,8 +8,8 @@ import (
 
 // FetchChatMessagesInRoom は `chat_messages` テーブルと `users` テーブルを結合して、チャットメッセージ情報とユーザー情報を取得する。
 func (h *ChatMessagesHandler) FetchChatMessagesInRoom(c echo.Context) error {
-	id := c.Param("id")
-	chatMessages, err := h.ChatMessagesService.FetchChatMessagesInRoom(id)
+	roomId := c.Param("id")
+	chatMessages, err := h.ChatMessagesService.FetchChatMessagesInRoom(roomId)
 
 	if err != nil {
 		switch err.Error() {
