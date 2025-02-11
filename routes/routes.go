@@ -58,6 +58,7 @@ func SetUpRouter(e *echo.Echo) {
 		likes := api.Group("/messages")
 		{
 			likes.GET("/:id/likes", ChatLikesHandler.FetchChatLikesInUsers)
+			likes.POST("", ChatMessagesHandler.CreateChatMessage)
 		}
 	}
 }

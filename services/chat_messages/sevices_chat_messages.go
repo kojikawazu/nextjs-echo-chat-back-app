@@ -26,3 +26,26 @@ func (s *ChatMessagesServiceImpl) FetchChatMessagesInRoom(roomId string) ([]map[
 
 	return chatMessages, nil
 }
+
+// CreateChatMessage は `chat_messages` テーブルにメッセージを作成する。
+func (s *ChatMessagesServiceImpl) CreateChatMessage(message string, roomId string, userId string) (string, error) {
+	// idが空の場合はエラー
+	if message == "" || roomId == "" || userId == "" {
+		logger.ErrorLog.Printf("message, roomId, userId is required")
+		return "", errors.New("message, roomId, userId is required")
+	}
+	// UUIDかどうかを確認
+	if !utils_uuid.IsUUID(roomId) {
+		logger.ErrorLog.Printf("invalid id")
+		return "", errors.New("invalid id")
+	}
+
+	// メッセージを作成
+	messageId, err := s.ChatMessagesRepository.CreateChatMessage(message, roomId, userId)
+	if err != nil {
+		return "", err
+	}
+
+	logger.InfoLog.Printf("Created chat_message successfully")
+	return messageId, nil
+}
