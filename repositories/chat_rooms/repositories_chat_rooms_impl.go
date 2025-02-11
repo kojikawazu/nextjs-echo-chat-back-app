@@ -5,7 +5,8 @@ import "nextjs-echo-chat-back-app/models"
 // ChatRoomsRepositoryインターフェース
 type ChatRoomsRepository interface {
 	FetchChatRooms() ([]models.ChatRooms, error)
-	FetchUsersInRoom(id string) ([]map[string]string, error)
+	FetchUsersInRoom(roomId string) ([]map[string]string, error)
+	CreateRoom(roomName string) (string, error)
 }
 
 // ChatRoomsRepositoryImpl は ChatRoomsRepository の実装

@@ -53,6 +53,7 @@ func SetUpRouter(e *echo.Echo) {
 			rooms.GET("", ChatRoomsHandler.FetchChatRooms)
 			rooms.GET("/:id/users", ChatRoomsHandler.FetchUsersInRoom)
 			rooms.GET("/:id/messages", ChatMessagesHandler.FetchChatMessagesInRoom)
+			rooms.POST("", ChatRoomsHandler.CreateRoom)
 		}
 		likes := api.Group("/messages")
 		{
