@@ -85,8 +85,8 @@ func (r *ChatLikesRepositoryImpl) CreateChatLike(messageId string, userId string
 	// トランザクションのロールバックを `defer` で設定（Commit された場合は無視される）
 	defer tx.Rollback(middlewares.Ctx)
 
-	// トランザクションを実行
-	rows, err := tx.Query(middlewares.Ctx, query, messageId, userId)
+	var likeID string
+	err = tx.QueryRow(middlewares.Ctx, query, messageId, userId).Scan(&likeID)
 	if err != nil {
 		logger.ErrorLog.Printf("Failed to create chat_likes: %v", err)
 		return "", err
@@ -96,13 +96,6 @@ func (r *ChatLikesRepositoryImpl) CreateChatLike(messageId string, userId string
 	err = tx.Commit(middlewares.Ctx)
 	if err != nil {
 		logger.ErrorLog.Printf("Failed to commit transaction: %v", err)
-		return "", err
-	}
-
-	var likeID string
-	err = rows.Scan(&likeID)
-	if err != nil {
-		logger.ErrorLog.Printf("Failed to scan chat_likes: %v", err)
 		return "", err
 	}
 
@@ -119,7 +112,8 @@ func (r *ChatLikesRepositoryImpl) DeleteChatLike(messageId string, userId string
 
 	query := `
 		DELETE FROM chat_likes
-		WHERE message_id = $1 AND user_id = $2;
+		WHERE message_id = $1 AND user_id = $2
+		RETURNING id
 	`
 
 	// トランザクションを開始
@@ -138,7 +132,8 @@ func (r *ChatLikesRepositoryImpl) DeleteChatLike(messageId string, userId string
 	defer tx.Rollback(middlewares.Ctx)
 
 	// トランザクションを実行
-	_, err = tx.Query(middlewares.Ctx, query, messageId, userId)
+	var likeID string
+	err = tx.QueryRow(middlewares.Ctx, query, messageId, userId).Scan(&likeID)
 	if err != nil {
 		logger.ErrorLog.Printf("Failed to delete chat_likes: %v", err)
 		return "", err
@@ -152,5 +147,5 @@ func (r *ChatLikesRepositoryImpl) DeleteChatLike(messageId string, userId string
 	}
 
 	logger.InfoLog.Printf("Deleted chat_likes successfully")
-	return "Deleted chat_likes successfully", nil
+	return likeID, nil
 }

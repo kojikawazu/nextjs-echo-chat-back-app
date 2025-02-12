@@ -67,8 +67,12 @@ func (h *ChatLikesHandler) CreateChatLike(c echo.Context) error {
 		}
 	}
 
+	response := map[string]string{
+		"id": likeId,
+	}
+
 	logger.InfoLog.Printf("Created chat_like successfully")
-	return c.JSON(http.StatusOK, likeId)
+	return c.JSON(http.StatusOK, response)
 }
 
 // DeleteChatLike は `chat_likes` テーブルからいいねを削除する。
@@ -102,6 +106,10 @@ func (h *ChatLikesHandler) DeleteChatLike(c echo.Context) error {
 		}
 	}
 
+	response := map[string]string{
+		"id": likeId,
+	}
+
 	logger.InfoLog.Printf("Deleted chat_like successfully")
-	return c.JSON(http.StatusOK, likeId)
+	return c.JSON(http.StatusOK, response)
 }
