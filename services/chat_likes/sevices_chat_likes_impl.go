@@ -6,7 +6,9 @@ import (
 
 // ChatLikesServiceインターフェース
 type ChatLikesService interface {
-	FetchChatLikesInUsers(id string) ([]map[string]string, error)
+	FetchChatLikesInUsers(messageId string) ([]map[string]string, error)
+	CreateChatLike(messageId string, userId string) (string, error)
+	DeleteChatLike(messageId string, userId string) (string, error)
 }
 
 // ChatMessagesServiceImpl は ChatMessagesService の実装
