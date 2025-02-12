@@ -89,3 +89,49 @@ func (r *ChatMessagesRepositoryImpl) FetchChatMessagesInRoom(roomId string) ([]m
 	logger.InfoLog.Println("Fetched messages successfully")
 	return messages, nil
 }
+
+// CreateChatMessage は `chat_messages` テーブルにメッセージを作成する。
+func (r *ChatMessagesRepositoryImpl) CreateChatMessage(message string, roomId string, userId string) (string, error) {
+	if message == "" || roomId == "" || userId == "" {
+		logger.ErrorLog.Printf("message, roomId, userId is required")
+		return "", errors.New("message, roomId, userId is required")
+	}
+
+	query := `
+		INSERT INTO chat_messages (content, room_id, user_id)
+		VALUES ($1, $2, $3)
+		RETURNING id
+	`
+
+	// トランザクション開始
+	tx, err := middlewares.Pool.Begin(middlewares.Ctx)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to begin transaction: %v", err)
+		return "", err
+	}
+	defer func() {
+		// ロールバック
+		if r := recover(); r != nil {
+			tx.Rollback(middlewares.Ctx)
+		}
+	}()
+	// トランザクションのロールバックを `defer` で設定（Commit された場合は無視される）
+	defer tx.Rollback(middlewares.Ctx)
+
+	var messageId string
+	err = tx.QueryRow(middlewares.Ctx, query, message, roomId, userId).Scan(&messageId)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to create chat_message: %v", err)
+		return "", err
+	}
+
+	// コミット
+	err = tx.Commit(middlewares.Ctx)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to commit transaction: %v", err)
+		return "", err
+	}
+
+	logger.InfoLog.Println("Created chat_message successfully")
+	return messageId, nil
+}
