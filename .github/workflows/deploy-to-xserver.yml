@@ -1,0 +1,58 @@
+name: Deploy to Xserver
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Package application
+        run: |
+          mkdir -p tmp_package
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='manuals' \
+            --exclude='private' \
+            ./ tmp_package/
+          echo PORT=${{ secrets.PORT }} >> tmp_package/.env
+          echo ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }} >> tmp_package/.env
+          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> tmp_package/.env
+          tar -czf app.tar.gz -C tmp_package .
+          rm -rf tmp_package
+      
+      - name: Deploy application
+        uses: appleboy/scp-action@v0.1.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "app.tar.gz"
+          target: "/home/appuser/projects"
+
+      - name: Restart application with Docker Compose
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/appuser/projects
+            tar -xzf app.tar.gz
+            rm -f app.tar.gz
+            docker-compose down || true
+            docker-compose up -d --build
