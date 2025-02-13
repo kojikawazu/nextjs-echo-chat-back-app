@@ -59,8 +59,8 @@ func SetUpRouter(e *echo.Echo) {
 		{
 			likes.POST("", ChatMessagesHandler.CreateChatMessage)
 			likes.GET("/:id/likes", ChatLikesHandler.FetchChatLikesInUsers)
-			likes.POST("/:id/likes/:userId", ChatLikesHandler.CreateChatLike)
-			likes.DELETE("/:id/likes/:userId", ChatLikesHandler.DeleteChatLike)
+			likes.POST("/:id/likes", ChatLikesHandler.CreateChatLike)
+			likes.DELETE("/:id/likes", ChatLikesHandler.DeleteChatLike)
 		}
 	}
 }
