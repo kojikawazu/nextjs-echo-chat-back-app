@@ -20,7 +20,7 @@ func (h *ChatRoomsHandler) FetchChatRooms(c echo.Context) error {
 		})
 	}
 
-	logger.InfoLog.Printf("Fetched chat_rooms: %v", chatRooms)
+	logger.InfoLog.Println("Fetched chat_rooms.")
 	return c.JSON(http.StatusOK, chatRooms)
 }
 
@@ -49,7 +49,7 @@ func (h *ChatRoomsHandler) FetchUsersInRoom(c echo.Context) error {
 		}
 	}
 
-	logger.InfoLog.Printf("Fetched users in room: %v", chatRooms)
+	logger.InfoLog.Println("Fetched users in room.")
 	return c.JSON(http.StatusOK, chatRooms)
 }
 
@@ -95,7 +95,7 @@ func (h *ChatRoomsHandler) CreateRoom(c echo.Context) error {
 		}
 	}
 
-	logger.InfoLog.Printf("Created room: %v", roomId)
+	logger.InfoLog.Println("Created room.")
 	return c.JSON(http.StatusOK, map[string]string{
 		"room_id": roomId,
 	})
