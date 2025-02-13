@@ -59,11 +59,14 @@ func BroadcastMessage(message models.ChatMessages) {
 	clientsLock.Lock()
 	defer clientsLock.Unlock()
 
+	// ルームIDに紐づくクライアントを取得
 	connections, exists := clients[message.RoomID]
 	if !exists {
+		logger.ErrorLog.Println("Room not found:", message.RoomID)
 		return
 	}
 
+	// メッセージをJSONに変換
 	msgBytes, err := json.Marshal(message)
 	if err != nil {
 		logger.ErrorLog.Println("JSON Marshal Error:", err)
