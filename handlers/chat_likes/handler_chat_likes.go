@@ -2,9 +2,7 @@ package handlers_chat_likes
 
 import (
 	"net/http"
-	utils "nextjs-echo-chat-back-app/utils/clerk"
 	"nextjs-echo-chat-back-app/utils/logger"
-	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -13,24 +11,19 @@ import (
 func (h *ChatLikesHandler) FetchChatLikesInUsers(c echo.Context) error {
 
 	// Authorization ヘッダーから JWT を取得
-	authHeader := c.Request().Header.Get("Authorization")
-	if authHeader == "" {
-		logger.ErrorLog.Printf("No authorization header found")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
-	}
-
-	// Bearer トークンを取得
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == authHeader {
-		logger.ErrorLog.Printf("Invalid token format")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
-	}
-
-	// JWT の検証と `userId` の取得
-	_, err := utils.VerifyClerkToken(tokenStr)
+	_, err := h.ClerkJwtService.CheckClerkToken(c)
 	if err != nil {
-		logger.ErrorLog.Printf("Invalid token: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		switch err.Error() {
+		case "No authorization header found":
+			logger.ErrorLog.Printf("No authorization header found")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		case "Invalid token format":
+			logger.ErrorLog.Printf("Invalid token format")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+		case "Invalid token":
+			logger.ErrorLog.Printf("Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		}
 	}
 
 	messageId := c.Param("id")
@@ -65,24 +58,19 @@ func (h *ChatLikesHandler) CreateChatLike(c echo.Context) error {
 	messageId := c.Param("id")
 
 	// Authorization ヘッダーから JWT を取得
-	authHeader := c.Request().Header.Get("Authorization")
-	if authHeader == "" {
-		logger.ErrorLog.Printf("No authorization header found")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
-	}
-
-	// Bearer トークンを取得
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == authHeader {
-		logger.ErrorLog.Printf("Invalid token format")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
-	}
-
-	// JWT の検証と `userId` の取得
-	userId, err := utils.VerifyClerkToken(tokenStr)
+	userId, err := h.ClerkJwtService.CheckClerkToken(c)
 	if err != nil {
-		logger.ErrorLog.Printf("Invalid token: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		switch err.Error() {
+		case "No authorization header found":
+			logger.ErrorLog.Printf("No authorization header found")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		case "Invalid token format":
+			logger.ErrorLog.Printf("Invalid token format")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+		case "Invalid token":
+			logger.ErrorLog.Printf("Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		}
 	}
 
 	// いいねの作成
@@ -125,24 +113,19 @@ func (h *ChatLikesHandler) DeleteChatLike(c echo.Context) error {
 	messageId := c.Param("id")
 
 	// Authorization ヘッダーから JWT を取得
-	authHeader := c.Request().Header.Get("Authorization")
-	if authHeader == "" {
-		logger.ErrorLog.Printf("No authorization header found")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
-	}
-
-	// Bearer トークンを取得
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == authHeader {
-		logger.ErrorLog.Printf("Invalid token format")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
-	}
-
-	// JWT の検証と `userId` の取得
-	userId, err := utils.VerifyClerkToken(tokenStr)
+	userId, err := h.ClerkJwtService.CheckClerkToken(c)
 	if err != nil {
-		logger.ErrorLog.Printf("Invalid token: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		switch err.Error() {
+		case "No authorization header found":
+			logger.ErrorLog.Printf("No authorization header found")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		case "Invalid token format":
+			logger.ErrorLog.Printf("Invalid token format")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+		case "Invalid token":
+			logger.ErrorLog.Printf("Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		}
 	}
 
 	// いいねの削除
