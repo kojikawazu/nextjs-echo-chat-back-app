@@ -31,6 +31,7 @@ jobs:
           echo ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }} >> tmp_package/.env
           echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> tmp_package/.env
           echo CLERK_JWT_ENDPOINT=${{ secrets.CLERK_JWT_ENDPOINT }} >> tmp_package/.env
+          echo WS_PORT=${{ secrets.WS_PORT }} >> tmp_package/.env
           tar -czf app.tar.gz -C tmp_package .
           rm -rf tmp_package
       

@@ -4,8 +4,34 @@ import (
 	"encoding/json"
 	"errors"
 	"nextjs-echo-chat-back-app/middlewares"
+	"nextjs-echo-chat-back-app/models"
 	"nextjs-echo-chat-back-app/utils/logger"
 )
+
+// メッセージIDから詳細を取得する
+func (r *ChatMessagesRepositoryImpl) GetChatMessageByID(messageId string) (models.ChatMessages, error) {
+	if messageId == "" {
+		logger.ErrorLog.Printf("messageId is required")
+		return models.ChatMessages{}, errors.New("messageId is required")
+	}
+
+	query := `
+		SELECT id, content, room_id, user_id, created_at, updated_at
+		FROM chat_messages
+		WHERE id = $1
+	`
+
+	var msg models.ChatMessages
+	err := middlewares.Pool.QueryRow(middlewares.Ctx, query, messageId).
+		Scan(&msg.ID, &msg.Content, &msg.RoomID, &msg.UserID, &msg.CreatedAt, &msg.UpdatedAt)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to fetch chat_message: %v", err)
+		return models.ChatMessages{}, err
+	}
+
+	logger.InfoLog.Printf("Fetched chat_message: %v", msg)
+	return msg, nil
+}
 
 // FetchChatMessagesInRoom は `chat_messages` テーブルと `users` テーブルを結合して、チャットメッセージ情報とユーザー情報を取得する。
 func (r *ChatMessagesRepositoryImpl) FetchChatMessagesInRoom(roomId string) ([]map[string]interface{}, error) {
@@ -91,10 +117,10 @@ func (r *ChatMessagesRepositoryImpl) FetchChatMessagesInRoom(roomId string) ([]m
 }
 
 // CreateChatMessage は `chat_messages` テーブルにメッセージを作成する。
-func (r *ChatMessagesRepositoryImpl) CreateChatMessage(message string, roomId string, userId string) (string, error) {
+func (r *ChatMessagesRepositoryImpl) CreateChatMessage(message string, roomId string, userId string) (models.ChatMessages, error) {
 	if message == "" || roomId == "" || userId == "" {
 		logger.ErrorLog.Printf("message, roomId, userId is required")
-		return "", errors.New("message, roomId, userId is required")
+		return models.ChatMessages{}, errors.New("message, roomId, userId is required")
 	}
 
 	query := `
@@ -107,7 +133,7 @@ func (r *ChatMessagesRepositoryImpl) CreateChatMessage(message string, roomId st
 	tx, err := middlewares.Pool.Begin(middlewares.Ctx)
 	if err != nil {
 		logger.ErrorLog.Printf("Failed to begin transaction: %v", err)
-		return "", err
+		return models.ChatMessages{}, err
 	}
 	defer func() {
 		// ロールバック
@@ -122,16 +148,24 @@ func (r *ChatMessagesRepositoryImpl) CreateChatMessage(message string, roomId st
 	err = tx.QueryRow(middlewares.Ctx, query, message, roomId, userId).Scan(&messageId)
 	if err != nil {
 		logger.ErrorLog.Printf("Failed to create chat_message: %v", err)
-		return "", err
+		return models.ChatMessages{}, err
 	}
 
 	// コミット
 	err = tx.Commit(middlewares.Ctx)
 	if err != nil {
 		logger.ErrorLog.Printf("Failed to commit transaction: %v", err)
-		return "", err
+		return models.ChatMessages{}, err
 	}
 
+	// 作成したメッセージの詳細を取得
+	msg, err := r.GetChatMessageByID(messageId)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to get chat_message: %v", err)
+		return models.ChatMessages{}, err
+	}
+
+	logger.InfoLog.Printf("Created chat_message: %v", msg)
 	logger.InfoLog.Println("Created chat_message successfully")
-	return messageId, nil
+	return msg, nil
 }

@@ -31,6 +31,8 @@ func SetUp(e *echo.Echo) {
 	middlewares.SetUpMiddlewares(e)
 	// ルーティングの設定
 	routes.SetUpRouter(e)
+	// WebSocketのルーティング設定
+	routes.SetUpWebSocketRoutes(e)
 
 	go func() {
 		<-quit
@@ -47,10 +49,28 @@ func SetUp(e *echo.Echo) {
 	}()
 }
 
+func SetUpWebSocketServer() {
+	wsServer := echo.New()
+	routes.SetUpWebSocketRoutes(wsServer)
+
+	wsPort := config.WsPort
+	if wsPort == "" {
+		wsPort = "8081"
+	}
+	go func() {
+		logger.InfoLog.Println("Starting WebSocket server on port 8081")
+		if err := wsServer.Start(":" + wsPort); err != nil && err != http.ErrServerClosed {
+			logger.ErrorLog.Fatalf("WebSocket server failed: %v", err)
+		}
+	}()
+}
+
 func main() {
 	// Echoの初期化
 	e := echo.New()
 
+	// WebSocketサーバーのセットアップ
+	SetUpWebSocketServer()
 	// セットアップ
 	SetUp(e)
 
