@@ -1,13 +1,14 @@
 package services_chat_messages
 
 import (
+	"nextjs-echo-chat-back-app/models"
 	repositories_chat_messages "nextjs-echo-chat-back-app/repositories/chat_messages"
 )
 
 // ChatMessagesServiceインターフェース
 type ChatMessagesService interface {
 	FetchChatMessagesInRoom(roomId string) ([]map[string]interface{}, error)
-	CreateChatMessage(message string, roomId string, userId string) (string, error)
+	CreateChatMessage(message string, roomId string, userId string) (models.ChatMessages, error)
 }
 
 // ChatMessagesServiceImpl は ChatMessagesService の実装

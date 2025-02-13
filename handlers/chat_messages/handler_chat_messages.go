@@ -5,6 +5,7 @@ import (
 	"nextjs-echo-chat-back-app/models"
 	utils "nextjs-echo-chat-back-app/utils/clerk"
 	"nextjs-echo-chat-back-app/utils/logger"
+	"nextjs-echo-chat-back-app/websocket"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -72,7 +73,7 @@ func (h *ChatMessagesHandler) CreateChatMessage(c echo.Context) error {
 	roomId := createChatMessageRequest.RoomId
 
 	// チャットメッセージの作成
-	messageId, err := h.ChatMessagesService.CreateChatMessage(message, roomId, userId)
+	msg, err := h.ChatMessagesService.CreateChatMessage(message, roomId, userId)
 	if err != nil {
 		switch err.Error() {
 		case "message, roomId, userId is required":
@@ -93,8 +94,11 @@ func (h *ChatMessagesHandler) CreateChatMessage(c echo.Context) error {
 		}
 	}
 
+	// WebSocketでメッセージを送信
+	websocket.BroadcastMessage(msg)
+
 	logger.InfoLog.Printf("Created chat_message successfully")
 	return c.JSON(http.StatusOK, map[string]string{
-		"messageId": messageId,
+		"messageId": msg.ID,
 	})
 }
