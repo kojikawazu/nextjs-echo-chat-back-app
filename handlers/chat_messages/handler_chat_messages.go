@@ -3,7 +3,9 @@ package handlers_chat_messages
 import (
 	"net/http"
 	"nextjs-echo-chat-back-app/models"
+	utils "nextjs-echo-chat-back-app/utils/clerk"
 	"nextjs-echo-chat-back-app/utils/logger"
+	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -37,16 +39,39 @@ func (h *ChatMessagesHandler) FetchChatMessagesInRoom(c echo.Context) error {
 func (h *ChatMessagesHandler) CreateChatMessage(c echo.Context) error {
 	var createChatMessageRequest models.CreateChatMessageRequest
 
+	// Authorization ヘッダーから JWT を取得
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		logger.ErrorLog.Printf("No authorization header found")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Bearer トークンを取得
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenStr == authHeader {
+		logger.ErrorLog.Printf("Invalid token format")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
+
+	// JWT の検証と `userId` の取得
+	userId, err := utils.VerifyClerkToken(tokenStr)
+	if err != nil {
+		logger.ErrorLog.Printf("Invalid token: %v", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+	}
+
+	// リクエストボディのバインド
 	if err := c.Bind(&createChatMessageRequest); err != nil {
 		logger.ErrorLog.Printf("Failed to bind create chat_message request: %v", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid request",
 		})
 	}
+
 	message := createChatMessageRequest.Message
 	roomId := createChatMessageRequest.RoomId
-	userId := createChatMessageRequest.UserId
 
+	// チャットメッセージの作成
 	messageId, err := h.ChatMessagesService.CreateChatMessage(message, roomId, userId)
 	if err != nil {
 		switch err.Error() {
