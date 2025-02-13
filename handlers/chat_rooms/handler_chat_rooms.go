@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"nextjs-echo-chat-back-app/models"
 	"nextjs-echo-chat-back-app/utils/logger"
+	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -55,6 +56,20 @@ func (h *ChatRoomsHandler) FetchUsersInRoom(c echo.Context) error {
 // CreateRoom は新しいチャットルームを作成する。
 func (h *ChatRoomsHandler) CreateRoom(c echo.Context) error {
 	var createRoomRequest models.CreateRoomRequest
+
+	// Authorization ヘッダーから JWT を取得
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		logger.ErrorLog.Printf("No authorization header found")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Bearer トークンを取得
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenStr == authHeader {
+		logger.ErrorLog.Printf("Invalid token format")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
 
 	if err := c.Bind(&createRoomRequest); err != nil {
 		logger.ErrorLog.Printf("Failed to bind create room request: %v", err)
