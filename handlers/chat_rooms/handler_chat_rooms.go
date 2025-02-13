@@ -3,9 +3,7 @@ package handlers_chat_rooms
 import (
 	"net/http"
 	"nextjs-echo-chat-back-app/models"
-	utils "nextjs-echo-chat-back-app/utils/clerk"
 	"nextjs-echo-chat-back-app/utils/logger"
-	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -14,24 +12,19 @@ import (
 func (h *ChatRoomsHandler) FetchChatRooms(c echo.Context) error {
 
 	// Authorization ヘッダーから JWT を取得
-	authHeader := c.Request().Header.Get("Authorization")
-	if authHeader == "" {
-		logger.ErrorLog.Printf("No authorization header found")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
-	}
-
-	// Bearer トークンを取得
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == authHeader {
-		logger.ErrorLog.Printf("Invalid token format")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
-	}
-
-	// JWT の検証と `userId` の取得
-	_, err := utils.VerifyClerkToken(tokenStr)
+	_, err := h.ClerkJwtService.CheckClerkToken(c)
 	if err != nil {
-		logger.ErrorLog.Printf("Invalid token: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		switch err.Error() {
+		case "No authorization header found":
+			logger.ErrorLog.Printf("No authorization header found")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		case "Invalid token format":
+			logger.ErrorLog.Printf("Invalid token format")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+		case "Invalid token":
+			logger.ErrorLog.Printf("Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		}
 	}
 
 	chatRooms, err := h.ChatRoomsService.FetchChatRooms()
@@ -50,24 +43,19 @@ func (h *ChatRoomsHandler) FetchChatRooms(c echo.Context) error {
 func (h *ChatRoomsHandler) FetchUsersInRoom(c echo.Context) error {
 
 	// Authorization ヘッダーから JWT を取得
-	authHeader := c.Request().Header.Get("Authorization")
-	if authHeader == "" {
-		logger.ErrorLog.Printf("No authorization header found")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
-	}
-
-	// Bearer トークンを取得
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == authHeader {
-		logger.ErrorLog.Printf("Invalid token format")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
-	}
-
-	// JWT の検証と `userId` の取得
-	_, err := utils.VerifyClerkToken(tokenStr)
+	_, err := h.ClerkJwtService.CheckClerkToken(c)
 	if err != nil {
-		logger.ErrorLog.Printf("Invalid token: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		switch err.Error() {
+		case "No authorization header found":
+			logger.ErrorLog.Printf("No authorization header found")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		case "Invalid token format":
+			logger.ErrorLog.Printf("Invalid token format")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+		case "Invalid token":
+			logger.ErrorLog.Printf("Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		}
 	}
 
 	id := c.Param("id")
@@ -102,24 +90,19 @@ func (h *ChatRoomsHandler) CreateRoom(c echo.Context) error {
 	var createRoomRequest models.CreateRoomRequest
 
 	// Authorization ヘッダーから JWT を取得
-	authHeader := c.Request().Header.Get("Authorization")
-	if authHeader == "" {
-		logger.ErrorLog.Printf("No authorization header found")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
-	}
-
-	// Bearer トークンを取得
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == authHeader {
-		logger.ErrorLog.Printf("Invalid token format")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
-	}
-
-	// JWT の検証と `userId` の取得
-	_, err := utils.VerifyClerkToken(tokenStr)
+	_, err := h.ClerkJwtService.CheckClerkToken(c)
 	if err != nil {
-		logger.ErrorLog.Printf("Invalid token: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		switch err.Error() {
+		case "No authorization header found":
+			logger.ErrorLog.Printf("No authorization header found")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		case "Invalid token format":
+			logger.ErrorLog.Printf("Invalid token format")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+		case "Invalid token":
+			logger.ErrorLog.Printf("Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		}
 	}
 
 	if err := c.Bind(&createRoomRequest); err != nil {

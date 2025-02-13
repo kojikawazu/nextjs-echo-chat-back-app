@@ -3,10 +3,8 @@ package handlers_chat_messages
 import (
 	"net/http"
 	"nextjs-echo-chat-back-app/models"
-	utils "nextjs-echo-chat-back-app/utils/clerk"
 	"nextjs-echo-chat-back-app/utils/logger"
 	"nextjs-echo-chat-back-app/websocket"
-	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -15,24 +13,19 @@ import (
 func (h *ChatMessagesHandler) FetchChatMessagesInRoom(c echo.Context) error {
 
 	// Authorization ヘッダーから JWT を取得
-	authHeader := c.Request().Header.Get("Authorization")
-	if authHeader == "" {
-		logger.ErrorLog.Printf("No authorization header found")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
-	}
-
-	// Bearer トークンを取得
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == authHeader {
-		logger.ErrorLog.Printf("Invalid token format")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
-	}
-
-	// JWT の検証と `userId` の取得
-	_, err := utils.VerifyClerkToken(tokenStr)
+	_, err := h.ClerkJwtService.CheckClerkToken(c)
 	if err != nil {
-		logger.ErrorLog.Printf("Invalid token: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		switch err.Error() {
+		case "No authorization header found":
+			logger.ErrorLog.Printf("No authorization header found")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		case "Invalid token format":
+			logger.ErrorLog.Printf("Invalid token format")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+		case "Invalid token":
+			logger.ErrorLog.Printf("Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		}
 	}
 
 	roomId := c.Param("id")
@@ -41,20 +34,24 @@ func (h *ChatMessagesHandler) FetchChatMessagesInRoom(c echo.Context) error {
 	if err != nil {
 		switch err.Error() {
 		case "id is required":
+			logger.ErrorLog.Printf("Invalid id: %v", err)
 			return c.JSON(http.StatusBadRequest, map[string]string{
 				"error": "Invalid id",
 			})
 		case "invalid id":
+			logger.ErrorLog.Printf("Invalid id: %v", err)
 			return c.JSON(http.StatusBadRequest, map[string]string{
 				"error": "Invalid id",
 			})
 		default:
+			logger.ErrorLog.Printf("Error fetching chat_messages: %v", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{
 				"error": "Error fetching chat_messages",
 			})
 		}
 	}
 
+	logger.InfoLog.Println("Successfully fetched chat_messages.")
 	return c.JSON(http.StatusOK, chatMessages)
 }
 
@@ -63,24 +60,19 @@ func (h *ChatMessagesHandler) CreateChatMessage(c echo.Context) error {
 	var createChatMessageRequest models.CreateChatMessageRequest
 
 	// Authorization ヘッダーから JWT を取得
-	authHeader := c.Request().Header.Get("Authorization")
-	if authHeader == "" {
-		logger.ErrorLog.Printf("No authorization header found")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
-	}
-
-	// Bearer トークンを取得
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenStr == authHeader {
-		logger.ErrorLog.Printf("Invalid token format")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
-	}
-
-	// JWT の検証と `userId` の取得
-	userId, err := utils.VerifyClerkToken(tokenStr)
+	userId, err := h.ClerkJwtService.CheckClerkToken(c)
 	if err != nil {
-		logger.ErrorLog.Printf("Invalid token: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		switch err.Error() {
+		case "No authorization header found":
+			logger.ErrorLog.Printf("No authorization header found")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+		case "Invalid token format":
+			logger.ErrorLog.Printf("Invalid token format")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+		case "Invalid token":
+			logger.ErrorLog.Printf("Invalid token")
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+		}
 	}
 
 	// リクエストボディのバインド
