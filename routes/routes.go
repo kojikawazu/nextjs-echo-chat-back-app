@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"net/http"
-
 	handlers_chat_likes "nextjs-echo-chat-back-app/handlers/chat_likes"
 	handlers_chat_messages "nextjs-echo-chat-back-app/handlers/chat_messages"
 	handlers_chat_rooms "nextjs-echo-chat-back-app/handlers/chat_rooms"
@@ -18,9 +16,9 @@ import (
 
 func SetUpRouter(e *echo.Echo) {
 	// ヘルスチェックエンドポイントの追加
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Service is running")
-	})
+	// e.GET("/", func(c echo.Context) error {
+	// 	return c.String(http.StatusOK, "Service is running")
+	// })
 
 	// DI注入
 	// repositories
