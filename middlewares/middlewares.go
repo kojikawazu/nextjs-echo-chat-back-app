@@ -9,9 +9,16 @@ import (
 	"github.com/labstack/echo/middleware"
 )
 
-// ブロックするIPアドレスリスト
-var blockedIPs = map[string]bool{
-	os.Getenv("BLOCKED_IP_ADDRESSES"): true,
+// ブロックする IP アドレスのリスト
+var blockedIPs = make(map[string]bool)
+
+func init() {
+	ips := os.Getenv("BLOCKED_IP_ADDRESSES")
+	if ips != "" {
+		for _, ip := range strings.Split(ips, ",") {
+			blockedIPs[strings.TrimSpace(ip)] = true
+		}
+	}
 }
 
 // IPアドレスをブロックするミドルウェア
@@ -19,13 +26,12 @@ func IPBlockMiddleware(e *echo.Echo) {
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			clientIP := c.RealIP()
-
 			if blockedIPs[clientIP] {
 				return c.JSON(http.StatusForbidden, map[string]string{
 					"error": "Access denied",
 				})
 			}
-			return nil
+			return next(c)
 		}
 	})
 }
