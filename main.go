@@ -29,6 +29,7 @@ func SetUp(e *echo.Echo) {
 
 	// ミドルウェアの設定
 	middlewares.SetUpMiddlewares(e)
+	middlewares.IPBlockMiddleware(e)
 	// ルーティングの設定
 	routes.SetUpRouter(e)
 	// WebSocketのルーティング設定
