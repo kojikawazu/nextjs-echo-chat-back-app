@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"nextjs-echo-chat-back-app/models"
 	"nextjs-echo-chat-back-app/utils/logger"
-	"nextjs-echo-chat-back-app/websocket"
 
 	"github.com/labstack/echo"
 )
@@ -109,7 +108,7 @@ func (h *ChatMessagesHandler) CreateChatMessage(c echo.Context) error {
 	}
 
 	// WebSocketでメッセージを送信
-	websocket.BroadcastMessage(roomId, msg)
+	h.WebSocketHandler.BroadcastMessage(roomId, msg)
 
 	logger.InfoLog.Printf("Created chat_message successfully")
 	return c.JSON(http.StatusOK, map[string]string{

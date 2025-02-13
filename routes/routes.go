@@ -4,6 +4,7 @@ import (
 	handlers_chat_likes "nextjs-echo-chat-back-app/handlers/chat_likes"
 	handlers_chat_messages "nextjs-echo-chat-back-app/handlers/chat_messages"
 	handlers_chat_rooms "nextjs-echo-chat-back-app/handlers/chat_rooms"
+	handlers_websocket_messages "nextjs-echo-chat-back-app/handlers/websocket_messages"
 	repositories_chat_likes "nextjs-echo-chat-back-app/repositories/chat_likes"
 	repositories_chat_messages "nextjs-echo-chat-back-app/repositories/chat_messages"
 	repositories_chat_rooms "nextjs-echo-chat-back-app/repositories/chat_rooms"
@@ -34,9 +35,10 @@ func SetUpRouter(e *echo.Echo) {
 	ChatLikesService := services_chat_likes.NewChatLikesService(ChatLikesRepository)
 	ClerkJwtService := services_clerk_jwt.NewClerkJwtService()
 	// handlers
+	WebSocketHandler := handlers_websocket_messages.NewWebSocketHandler()
 	//AuthUsersHandler := handlers_auth_users.NewAuthUsersHandler(AuthUsersService, ClerkJwtService)
 	ChatRoomsHandler := handlers_chat_rooms.NewChatRoomsHandler(ChatRoomsService, ClerkJwtService)
-	ChatMessagesHandler := handlers_chat_messages.NewChatMessagesHandler(ChatMessagesService, ClerkJwtService)
+	ChatMessagesHandler := handlers_chat_messages.NewChatMessagesHandler(ChatMessagesService, ClerkJwtService, WebSocketHandler)
 	ChatLikesHandler := handlers_chat_likes.NewChatLikesHandler(ChatLikesService, ClerkJwtService)
 
 	api := e.Group("/api")
