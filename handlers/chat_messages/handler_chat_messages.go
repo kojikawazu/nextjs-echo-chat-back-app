@@ -13,6 +13,28 @@ import (
 
 // FetchChatMessagesInRoom は `chat_messages` テーブルと `users` テーブルを結合して、チャットメッセージ情報とユーザー情報を取得する。
 func (h *ChatMessagesHandler) FetchChatMessagesInRoom(c echo.Context) error {
+
+	// Authorization ヘッダーから JWT を取得
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		logger.ErrorLog.Printf("No authorization header found")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Bearer トークンを取得
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenStr == authHeader {
+		logger.ErrorLog.Printf("Invalid token format")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
+
+	// JWT の検証と `userId` の取得
+	_, err := utils.VerifyClerkToken(tokenStr)
+	if err != nil {
+		logger.ErrorLog.Printf("Invalid token: %v", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+	}
+
 	roomId := c.Param("id")
 	chatMessages, err := h.ChatMessagesService.FetchChatMessagesInRoom(roomId)
 
