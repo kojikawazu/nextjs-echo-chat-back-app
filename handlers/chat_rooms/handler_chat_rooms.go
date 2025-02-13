@@ -3,6 +3,7 @@ package handlers_chat_rooms
 import (
 	"net/http"
 	"nextjs-echo-chat-back-app/models"
+	utils "nextjs-echo-chat-back-app/utils/clerk"
 	"nextjs-echo-chat-back-app/utils/logger"
 	"strings"
 
@@ -11,8 +12,29 @@ import (
 
 // FetchChatRooms は `chat_rooms` テーブルからすべてのチャットルーム情報を取得する。
 func (h *ChatRoomsHandler) FetchChatRooms(c echo.Context) error {
-	chatRooms, err := h.ChatRoomsService.FetchChatRooms()
 
+	// Authorization ヘッダーから JWT を取得
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		logger.ErrorLog.Printf("No authorization header found")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Bearer トークンを取得
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenStr == authHeader {
+		logger.ErrorLog.Printf("Invalid token format")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
+
+	// JWT の検証と `userId` の取得
+	_, err := utils.VerifyClerkToken(tokenStr)
+	if err != nil {
+		logger.ErrorLog.Printf("Invalid token: %v", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+	}
+
+	chatRooms, err := h.ChatRoomsService.FetchChatRooms()
 	if err != nil {
 		logger.ErrorLog.Printf("Failed to fetch chat_rooms: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
@@ -26,6 +48,28 @@ func (h *ChatRoomsHandler) FetchChatRooms(c echo.Context) error {
 
 // FetchUsersInRoom は `chat_rooms` テーブルと `users` テーブルを結合して、チャットルーム情報とユーザー情報を取得する。
 func (h *ChatRoomsHandler) FetchUsersInRoom(c echo.Context) error {
+
+	// Authorization ヘッダーから JWT を取得
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		logger.ErrorLog.Printf("No authorization header found")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Bearer トークンを取得
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenStr == authHeader {
+		logger.ErrorLog.Printf("Invalid token format")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
+
+	// JWT の検証と `userId` の取得
+	_, err := utils.VerifyClerkToken(tokenStr)
+	if err != nil {
+		logger.ErrorLog.Printf("Invalid token: %v", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+	}
+
 	id := c.Param("id")
 	chatRooms, err := h.ChatRoomsService.FetchUsersInRoom(id)
 
@@ -69,6 +113,13 @@ func (h *ChatRoomsHandler) CreateRoom(c echo.Context) error {
 	if tokenStr == authHeader {
 		logger.ErrorLog.Printf("Invalid token format")
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
+
+	// JWT の検証と `userId` の取得
+	_, err := utils.VerifyClerkToken(tokenStr)
+	if err != nil {
+		logger.ErrorLog.Printf("Invalid token: %v", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
 	}
 
 	if err := c.Bind(&createRoomRequest); err != nil {
