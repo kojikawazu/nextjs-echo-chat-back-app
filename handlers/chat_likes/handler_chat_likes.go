@@ -2,7 +2,9 @@ package handlers_chat_likes
 
 import (
 	"net/http"
+	utils "nextjs-echo-chat-back-app/utils/clerk"
 	"nextjs-echo-chat-back-app/utils/logger"
+	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -39,8 +41,29 @@ func (h *ChatLikesHandler) FetchChatLikesInUsers(c echo.Context) error {
 // CreateChatLike は `chat_likes` テーブルに新しいいいねを作成する。
 func (h *ChatLikesHandler) CreateChatLike(c echo.Context) error {
 	messageId := c.Param("id")
-	userId := c.Param("userId")
 
+	// Authorization ヘッダーから JWT を取得
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		logger.ErrorLog.Printf("No authorization header found")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Bearer トークンを取得
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenStr == authHeader {
+		logger.ErrorLog.Printf("Invalid token format")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
+
+	// JWT の検証と `userId` の取得
+	userId, err := utils.VerifyClerkToken(tokenStr)
+	if err != nil {
+		logger.ErrorLog.Printf("Invalid token: %v", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+	}
+
+	// いいねの作成
 	likeId, err := h.ChatLikesService.CreateChatLike(messageId, userId)
 	if err != nil {
 		switch err.Error() {
@@ -78,8 +101,29 @@ func (h *ChatLikesHandler) CreateChatLike(c echo.Context) error {
 // DeleteChatLike は `chat_likes` テーブルからいいねを削除する。
 func (h *ChatLikesHandler) DeleteChatLike(c echo.Context) error {
 	messageId := c.Param("id")
-	userId := c.Param("userId")
 
+	// Authorization ヘッダーから JWT を取得
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		logger.ErrorLog.Printf("No authorization header found")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Bearer トークンを取得
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenStr == authHeader {
+		logger.ErrorLog.Printf("Invalid token format")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
+
+	// JWT の検証と `userId` の取得
+	userId, err := utils.VerifyClerkToken(tokenStr)
+	if err != nil {
+		logger.ErrorLog.Printf("Invalid token: %v", err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+	}
+
+	// いいねの削除
 	likeId, err := h.ChatLikesService.DeleteChatLike(messageId, userId)
 	if err != nil {
 		switch err.Error() {
