@@ -18,6 +18,10 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Replace variables in Nginx config
+        run: |
+          envsubst '${NGINX_HTTP_PORT} ${NGINX_HTTPS_PORT} ${NGINX_WS_PORT} ${NGINX_APP_PORT} ${NGINX_DOMAIN} ${NGINX_WWW_DOMAIN}' < ./nginx/nginx.template.conf > ./nginx/nginx.conf
+  
       - name: Package application
         run: |
           mkdir -p tmp_package
@@ -27,13 +31,22 @@ jobs:
             --exclude='manuals' \
             --exclude='private' \
             ./ tmp_package/
-          echo PORT=${{ secrets.PORT }} >> tmp_package/.env
-          echo ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }} >> tmp_package/.env
-          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> tmp_package/.env
-          echo CLERK_JWT_ENDPOINT=${{ secrets.CLERK_JWT_ENDPOINT }} >> tmp_package/.env
-          echo WS_PORT=${{ secrets.WS_PORT }} >> tmp_package/.env
-          echo BLOCKED_IP_ADDRESSES=${{ secrets.BLOCKED_IP_ADDRESSES }} >> tmp_package/.env
-          echo ENV=${{ secrets.ENV }} >> tmp_package/.env
+
+          # .envファイルを作成
+          cat <<EOF > tmp_package/.env
+          PORT=${{ secrets.PORT }}
+          ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          CLERK_JWT_ENDPOINT=${{ secrets.CLERK_JWT_ENDPOINT }}
+          WS_PORT=${{ secrets.WS_PORT }}
+          BLOCKED_IP_ADDRESSES=${{ secrets.BLOCKED_IP_ADDRESSES }}
+          ENV=${{ secrets.ENV }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          ALGORITHM=${{ secrets.ALGORITHM }}
+          IV_LENGTH=${{ secrets.IV_LENGTH }}
+          EOF
+
+          # アーカイブ作成
           tar -czf app.tar.gz -C tmp_package .
           rm -rf tmp_package
       
