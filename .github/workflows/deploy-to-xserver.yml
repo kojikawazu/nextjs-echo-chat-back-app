@@ -20,7 +20,7 @@ jobs:
 
       - name: Replace variables in Nginx config
         run: |
-          envsubst '${NGINX_HTTP_PORT} ${NGINX_HTTPS_PORT} ${NGINX_WS_PORT} ${NGINX_APP_PORT} ${NGINX_DOMAIN} ${NGINX_WWW_DOMAIN}' < ./nginx/nginx.template.conf > ./nginx/nginx.conf
+          envsubst '${NGINX_HTTP_PORT} ${NGINX_HTTPS_PORT} ${NGINX_WS_PORT} ${NGINX_APP_PORT} ${NGINX_DOMAIN} ${NGINX_WWW_DOMAIN}' < ./nginx/default.template.conf > ./nginx/default.conf
   
       - name: Package application
         run: |
