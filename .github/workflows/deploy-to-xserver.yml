@@ -57,6 +57,7 @@ jobs:
           NGINX_APP_PORT=${{ secrets.NGINX_APP_PORT }}
           NGINX_DOMAIN=${{ secrets.NGINX_DOMAIN }}
           NGINX_WWW_DOMAIN=${{ secrets.NGINX_WWW_DOMAIN }}
+          ALGO_KEY=${{ secrets.ALGO_KEY }}
           EOF
 
           # アーカイブ作成
