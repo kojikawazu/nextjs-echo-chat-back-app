@@ -26,8 +26,8 @@ func (h *ChatLikesHandler) FetchChatLikesInUsers(c echo.Context) error {
 		}
 	}
 
-	messageId := c.Param("id")
-	chatLikes, err := h.ChatLikesService.FetchChatLikesInUsers(messageId)
+	encryptedMessageId := c.Param("id")
+	chatLikes, err := h.ChatLikesService.FetchChatLikesInUsers(encryptedMessageId)
 
 	if err != nil {
 		switch err.Error() {
@@ -55,7 +55,7 @@ func (h *ChatLikesHandler) FetchChatLikesInUsers(c echo.Context) error {
 
 // CreateChatLike は `chat_likes` テーブルに新しいいいねを作成する。
 func (h *ChatLikesHandler) CreateChatLike(c echo.Context) error {
-	messageId := c.Param("id")
+	encryptedMessageId := c.Param("id")
 
 	// Authorization ヘッダーから JWT を取得
 	userId, err := h.ClerkJwtService.CheckClerkToken(c)
@@ -74,7 +74,7 @@ func (h *ChatLikesHandler) CreateChatLike(c echo.Context) error {
 	}
 
 	// いいねの作成
-	likeId, err := h.ChatLikesService.CreateChatLike(messageId, userId)
+	likeId, err := h.ChatLikesService.CreateChatLike(encryptedMessageId, userId)
 	if err != nil {
 		switch err.Error() {
 		case "messageId is required":
@@ -110,7 +110,7 @@ func (h *ChatLikesHandler) CreateChatLike(c echo.Context) error {
 
 // DeleteChatLike は `chat_likes` テーブルからいいねを削除する。
 func (h *ChatLikesHandler) DeleteChatLike(c echo.Context) error {
-	messageId := c.Param("id")
+	encryptedMessageId := c.Param("id")
 
 	// Authorization ヘッダーから JWT を取得
 	userId, err := h.ClerkJwtService.CheckClerkToken(c)
@@ -129,7 +129,7 @@ func (h *ChatLikesHandler) DeleteChatLike(c echo.Context) error {
 	}
 
 	// いいねの削除
-	likeId, err := h.ChatLikesService.DeleteChatLike(messageId, userId)
+	likeId, err := h.ChatLikesService.DeleteChatLike(encryptedMessageId, userId)
 	if err != nil {
 		switch err.Error() {
 		case "messageId is required":

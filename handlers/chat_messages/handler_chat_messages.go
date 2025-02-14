@@ -27,8 +27,8 @@ func (h *ChatMessagesHandler) FetchChatMessagesInRoom(c echo.Context) error {
 		}
 	}
 
-	roomId := c.Param("id")
-	chatMessages, err := h.ChatMessagesService.FetchChatMessagesInRoom(roomId)
+	encryptedRoomId := c.Param("id")
+	chatMessages, err := h.ChatMessagesService.FetchChatMessagesInRoom(encryptedRoomId)
 
 	if err != nil {
 		switch err.Error() {
