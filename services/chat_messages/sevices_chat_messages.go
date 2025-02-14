@@ -3,16 +3,22 @@ package services_chat_messages
 import (
 	"errors"
 	"nextjs-echo-chat-back-app/models"
+	utils_encrypt "nextjs-echo-chat-back-app/utils/encrypt"
 	"nextjs-echo-chat-back-app/utils/logger"
 	utils_uuid "nextjs-echo-chat-back-app/utils/uuid"
 )
 
 // FetchChatMessagesInRoom は `chat_messages` テーブルと `users` テーブルを結合して、チャットメッセージ情報とユーザー情報を取得する。
-func (s *ChatMessagesServiceImpl) FetchChatMessagesInRoom(roomId string) ([]map[string]interface{}, error) {
+func (s *ChatMessagesServiceImpl) FetchChatMessagesInRoom(encryptedRoomId string) ([]map[string]interface{}, error) {
 	// idが空の場合はエラー
-	if roomId == "" {
+	if encryptedRoomId == "" {
 		logger.ErrorLog.Printf("id is required")
 		return nil, errors.New("id is required")
+	}
+	// roomId を暗号化
+	roomId, err := utils_encrypt.Decrypt(encryptedRoomId)
+	if err != nil {
+		return nil, err
 	}
 	// UUIDかどうかを確認
 	if !utils_uuid.IsUUID(roomId) {

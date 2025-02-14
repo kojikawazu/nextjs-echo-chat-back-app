@@ -7,7 +7,7 @@ import (
 
 // ChatMessagesServiceインターフェース
 type ChatMessagesService interface {
-	FetchChatMessagesInRoom(roomId string) ([]map[string]interface{}, error)
+	FetchChatMessagesInRoom(encryptedRoomId string) ([]map[string]interface{}, error)
 	CreateChatMessage(message string, roomId string, userId string) (models.ChatMessages, error)
 }
 
