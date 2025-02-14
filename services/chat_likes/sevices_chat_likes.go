@@ -2,16 +2,28 @@ package services_chat_likes
 
 import (
 	"errors"
+	utils_encrypt "nextjs-echo-chat-back-app/utils/encrypt"
 	"nextjs-echo-chat-back-app/utils/logger"
 	utils_uuid "nextjs-echo-chat-back-app/utils/uuid"
 )
 
 // FetchChatLikesInUsers は `chat_likes` テーブルと `users` テーブルを結合して、チャットいいね情報とユーザー情報を取得する。
-func (s *ChatLikesServiceImpl) FetchChatLikesInUsers(messageId string) ([]map[string]string, error) {
-	// messageIdが空の場合はエラー
-	if messageId == "" {
+func (s *ChatLikesServiceImpl) FetchChatLikesInUsers(encryptedMessageId string) ([]map[string]string, error) {
+	// encryptedMessageIdが空の場合はエラー
+	if encryptedMessageId == "" {
 		logger.ErrorLog.Printf("messageId is required")
 		return nil, errors.New("messageId is required")
+	}
+	// messageId を復号化
+	messageId, err := utils_encrypt.Decrypt(encryptedMessageId)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to decrypt messageId: %v", err)
+		return nil, err
+	}
+	// UUIDかどうかを確認
+	if !utils_uuid.IsUUID(messageId) {
+		logger.ErrorLog.Printf("invalid messageId")
+		return nil, errors.New("invalid messageId")
 	}
 
 	chatLikes, err := s.ChatLikesRepository.FetchChatLikesInUsers(messageId)
@@ -23,9 +35,9 @@ func (s *ChatLikesServiceImpl) FetchChatLikesInUsers(messageId string) ([]map[st
 }
 
 // CreateChatLike は `chat_likes` テーブルに新しいいいねを作成する。
-func (s *ChatLikesServiceImpl) CreateChatLike(messageId string, userId string) (string, error) {
-	// messageIdが空の場合はエラー
-	if messageId == "" {
+func (s *ChatLikesServiceImpl) CreateChatLike(encryptedMessageId string, userId string) (string, error) {
+	// encryptedMessageIdが空の場合はエラー
+	if encryptedMessageId == "" {
 		logger.ErrorLog.Printf("messageId is required")
 		return "", errors.New("messageId is required")
 	}
@@ -33,6 +45,12 @@ func (s *ChatLikesServiceImpl) CreateChatLike(messageId string, userId string) (
 	if userId == "" {
 		logger.ErrorLog.Printf("userId is required")
 		return "", errors.New("userId is required")
+	}
+	// messageId を復号化
+	messageId, err := utils_encrypt.Decrypt(encryptedMessageId)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to decrypt messageId: %v", err)
+		return "", err
 	}
 	// UUIDかどうかを確認
 	if !utils_uuid.IsUUID(messageId) {
@@ -50,9 +68,9 @@ func (s *ChatLikesServiceImpl) CreateChatLike(messageId string, userId string) (
 }
 
 // DeleteChatLike は `chat_likes` テーブルからいいねを削除する。
-func (s *ChatLikesServiceImpl) DeleteChatLike(messageId string, userId string) (string, error) {
-	// messageIdが空の場合はエラー
-	if messageId == "" {
+func (s *ChatLikesServiceImpl) DeleteChatLike(encryptedMessageId string, userId string) (string, error) {
+	// encryptedMessageIdが空の場合はエラー
+	if encryptedMessageId == "" {
 		logger.ErrorLog.Printf("messageId is required")
 		return "", errors.New("messageId is required")
 	}
@@ -60,6 +78,12 @@ func (s *ChatLikesServiceImpl) DeleteChatLike(messageId string, userId string) (
 	if userId == "" {
 		logger.ErrorLog.Printf("userId is required")
 		return "", errors.New("userId is required")
+	}
+	// messageId を復号化
+	messageId, err := utils_encrypt.Decrypt(encryptedMessageId)
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to decrypt messageId: %v", err)
+		return "", err
 	}
 	// UUIDかどうかを確認
 	if !utils_uuid.IsUUID(messageId) {

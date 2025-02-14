@@ -15,9 +15,10 @@ func (s *ChatMessagesServiceImpl) FetchChatMessagesInRoom(encryptedRoomId string
 		logger.ErrorLog.Printf("id is required")
 		return nil, errors.New("id is required")
 	}
-	// roomId を暗号化
+	// roomId を復号化
 	roomId, err := utils_encrypt.Decrypt(encryptedRoomId)
 	if err != nil {
+		logger.ErrorLog.Printf("Failed to decrypt roomId: %v", err)
 		return nil, err
 	}
 	// UUIDかどうかを確認
