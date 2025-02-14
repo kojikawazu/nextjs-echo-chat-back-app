@@ -30,8 +30,8 @@ RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/main .
 COPY --from=builder /app/.env .
 
-# ポートを公開
-EXPOSE 8080
+# 環境変数を使ってポートを動的に変更
+EXPOSE ${NGINX_APP_PORT}
 
 # サーバーを実行
 CMD ["./main"]

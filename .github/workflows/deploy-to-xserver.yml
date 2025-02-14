@@ -51,6 +51,12 @@ jobs:
           SECRET_KEY=${{ secrets.SECRET_KEY }}
           ALGORITHM=${{ secrets.ALGORITHM }}
           IV_LENGTH=${{ secrets.IV_LENGTH }}
+          NGINX_HTTP_PORT=${{ secrets.NGINX_HTTP_PORT }}
+          NGINX_HTTPS_PORT=${{ secrets.NGINX_HTTPS_PORT }}
+          NGINX_WS_PORT=${{ secrets.NGINX_WS_PORT }}
+          NGINX_APP_PORT=${{ secrets.NGINX_APP_PORT }}
+          NGINX_DOMAIN=${{ secrets.NGINX_DOMAIN }}
+          NGINX_WWW_DOMAIN=${{ secrets.NGINX_WWW_DOMAIN }}
           EOF
 
           # アーカイブ作成
