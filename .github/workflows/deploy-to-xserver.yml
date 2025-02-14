@@ -21,7 +21,14 @@ jobs:
       - name: Replace variables in Nginx config
         run: |
           envsubst '${NGINX_HTTP_PORT} ${NGINX_HTTPS_PORT} ${NGINX_WS_PORT} ${NGINX_APP_PORT} ${NGINX_DOMAIN} ${NGINX_WWW_DOMAIN}' < ./nginx/default.template.conf > ./nginx/default.conf
-  
+        env:
+          NGINX_HTTP_PORT: ${{ secrets.NGINX_HTTP_PORT }}
+          NGINX_HTTPS_PORT: ${{ secrets.NGINX_HTTPS_PORT }}
+          NGINX_WS_PORT: ${{ secrets.NGINX_WS_PORT }}
+          NGINX_APP_PORT: ${{ secrets.NGINX_APP_PORT }}
+          NGINX_DOMAIN: ${{ secrets.NGINX_DOMAIN }}
+          NGINX_WWW_DOMAIN: ${{ secrets.NGINX_WWW_DOMAIN }}
+
       - name: Package application
         run: |
           mkdir -p tmp_package
