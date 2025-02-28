@@ -16,7 +16,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func SetUpRouter(e *echo.Echo) {
+func SetUpRouter(e *echo.Echo, ws *echo.Echo) {
 	// ヘルスチェックエンドポイントの追加
 	// e.GET("/", func(c echo.Context) error {
 	// 	return c.String(http.StatusOK, "Service is running")
@@ -63,11 +63,11 @@ func SetUpRouter(e *echo.Echo) {
 		}
 	}
 
-	// ---え--------------------------------------------------------
+	// ------------------------------------------------------------
 	// WebSocket
 	// ------------------------------------------------------------
 	// WebSocket 接続
-	e.GET("/ws", func(c echo.Context) error {
+	ws.GET("/ws", func(c echo.Context) error {
 		WebSocketHandler.HandleWebSocket(c.Response(), c.Request())
 		return nil
 	})
