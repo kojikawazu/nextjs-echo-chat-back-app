@@ -13,7 +13,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func SetUp(e *echo.Echo) {
+func SetUp(e *echo.Echo, ws *echo.Echo) {
 	// シグナルハンドラーの設定
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -31,7 +31,7 @@ func SetUp(e *echo.Echo) {
 	middlewares.SetUpMiddlewares(e)
 	middlewares.IPBlockMiddleware(e)
 	// ルーティングの設定
-	routes.SetUpRouter(e)
+	routes.SetUpRouter(e, ws)
 
 	go func() {
 		<-quit
@@ -44,16 +44,32 @@ func SetUp(e *echo.Echo) {
 		if err := e.Close(); err != nil {
 			logger.ErrorLog.Printf("Echo shutdown failed: %v", err)
 		}
+		// WebSocketサーバーのシャットダウン
+		if err := ws.Close(); err != nil {
+			logger.ErrorLog.Printf("WebSocket shutdown failed: %v", err)
+		}
 	}()
 }
 
 func main() {
 	// Echoの初期化
 	e := echo.New()
+	// WebSocketの初期化
+	ws := echo.New()
 
 	// セットアップ
-	SetUp(e)
+	SetUp(e, ws)
 
+	// WebSocketサーバーの起動
+	wsPort := config.WsPort
+	if wsPort == "" {
+		wsPort = "8081"
+	}
+	go func() {
+		if err := ws.Start(":" + wsPort); err != nil && err != http.ErrServerClosed {
+			logger.ErrorLog.Fatalf("WebSocket server failed: %v", err)
+		}
+	}()
 	// サーバーの起動
 	port := config.Port
 	if port == "" {
