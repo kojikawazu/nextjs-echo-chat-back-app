@@ -12,7 +12,7 @@
 
 ## Tech Stack
 
-[![Go](https://img.shields.io/badge/-Go-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
+[![Go](https://img.shields.io/badge/Go-1.23.6-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
 [![Echo](https://img.shields.io/badge/-Echo-000000?style=flat-square&logo=echo&logoColor=white)](https://echo.labstack.com/)
 [![WebSocket](https://img.shields.io/badge/-WebSocket-000000?style=flat-square&logo=websocket&logoColor=white)](https://developer.mozilla.org/ja/docs/Web/API/WebSocket)
 [![Docker](https://img.shields.io/badge/-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)

@@ -67,6 +67,8 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	h.clients[roomID][conn] = true
 	h.lock.Unlock()
 
+	logger.InfoLog.Printf("Client joined room successfully.")
+
 	// メッセージを受信
 	for {
 		var receivedMessage models.WebSocketMessage

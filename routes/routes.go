@@ -62,4 +62,13 @@ func SetUpRouter(e *echo.Echo) {
 			likes.DELETE("/:id/likes", ChatLikesHandler.DeleteChatLike)
 		}
 	}
+
+	// ---え--------------------------------------------------------
+	// WebSocket
+	// ------------------------------------------------------------
+	// WebSocket 接続
+	e.GET("/ws", func(c echo.Context) error {
+		WebSocketHandler.HandleWebSocket(c.Response(), c.Request())
+		return nil
+	})
 }
