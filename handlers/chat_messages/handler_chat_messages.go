@@ -108,7 +108,12 @@ func (h *ChatMessagesHandler) CreateChatMessage(c echo.Context) error {
 	}
 
 	// WebSocketでメッセージを送信
-	h.WebSocketHandler.BroadcastMessage(roomId, msg)
+	h.WebSocketHandler.BroadcastMessage(roomId, models.WebSocketChatMessage{
+		RoomID:    roomId,
+		Message:   msg.Content,
+		CreatedAt: msg.CreatedAt,
+		UpdatedAt: msg.UpdatedAt,
+	})
 
 	logger.InfoLog.Printf("Created chat_message successfully")
 	return c.JSON(http.StatusOK, map[string]string{
