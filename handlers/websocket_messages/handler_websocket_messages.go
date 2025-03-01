@@ -3,7 +3,6 @@ package handlers_websocket_messages
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"nextjs-echo-chat-back-app/models"
@@ -11,23 +10,6 @@ import (
 
 	"github.com/gorilla/websocket"
 )
-
-// WebSocketHandler 構造体
-type WebSocketHandler struct {
-	upgrader websocket.Upgrader
-	clients  map[string]map[*websocket.Conn]bool // roomId -> clients
-	lock     sync.Mutex
-}
-
-// NewWebSocketHandler: DI で WebSocketHandler を作成
-func NewWebSocketHandler() *WebSocketHandler {
-	return &WebSocketHandler{
-		upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool { return true },
-		},
-		clients: make(map[string]map[*websocket.Conn]bool),
-	}
-}
 
 // WebSocket の接続処理
 func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -39,66 +21,137 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		logger.ErrorLog.Println("WebSocket Upgrade Error:", err)
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		conn.Close()
+		h.removeClient(conn)
+	}()
 
 	logger.InfoLog.Println("Client connected, waiting for roomId...")
 
 	// 初回メッセージで `roomId` を受信
 	var msg models.WebSocketMessage
 	if err := conn.ReadJSON(&msg); err != nil {
-		logger.ErrorLog.Println("Failed to read room ID:", err)
+		h.sendErrorAndClose(conn, "Failed to read initial message")
+		logger.ErrorLog.Printf("Failed to read initial message: %v", err)
 		return
 	}
-
-	// `join` メッセージでなければエラー
 	if msg.Type != "join" {
-		logger.ErrorLog.Println("Invalid message type:", msg.Type)
+		h.sendErrorAndClose(conn, "First message must be join type")
+		logger.ErrorLog.Printf("First message not join type: %v", msg.Type)
 		return
 	}
 
-	roomID := msg.Data.RoomID
-	logger.InfoLog.Printf("Client joined room.")
+	// Dataを型安全にキャスト
+	joinDataMap, ok := msg.Data.(map[string]interface{})
+	if !ok {
+		h.sendErrorAndClose(conn, "Invalid join data format")
+		logger.ErrorLog.Printf("Invalid join data format: %v", msg.Data)
+		return
+	}
+	roomID, ok := joinDataMap["roomId"].(string)
+	if !ok || roomID == "" {
+		h.sendErrorAndClose(conn, "roomId is required for join")
+		logger.ErrorLog.Printf("roomId is required for join: %v", joinDataMap)
+		return
+	}
 
-	// クライアントを `roomId` に登録
+	// クライアントを追加
+	h.addClient(roomID, conn)
+	logger.InfoLog.Println("Client joined room.")
+
+	for {
+		// メッセージを受信
+		var receivedMessage models.WebSocketMessage
+		if err := conn.ReadJSON(&receivedMessage); err != nil {
+			logger.ErrorLog.Printf("Read Error: %v", err)
+			break
+		}
+
+		// メッセージの型に応じて処理を分岐
+		switch receivedMessage.Type {
+		case "message":
+			messageDataMap, ok := receivedMessage.Data.(map[string]interface{})
+			if !ok {
+				h.sendError(conn, "Invalid message format")
+				logger.ErrorLog.Printf("Invalid message format: %v", receivedMessage.Data)
+				continue
+			}
+
+			message, ok := messageDataMap["message"].(string)
+			if !ok || message == "" {
+				h.sendError(conn, "Message content cannot be empty")
+				logger.ErrorLog.Printf("Message content cannot be empty: %v", messageDataMap)
+				continue
+			}
+
+			chatMessage := models.WebSocketChatMessage{
+				RoomID:    roomID,
+				Message:   message,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+
+			// メッセージをブロードキャスト
+			h.BroadcastMessage(roomID, chatMessage)
+
+		default:
+			h.sendError(conn, "Unsupported message type")
+			logger.ErrorLog.Printf("Unsupported message type: %v", receivedMessage.Type)
+		}
+	}
+
+	logger.InfoLog.Println("Client disconnected from room successfully.")
+}
+
+// エラー送信（接続を切断しない）
+func (h *WebSocketHandler) sendError(conn *websocket.Conn, errMsg string) {
+	errMessage := models.WebSocketMessage{
+		Type: "error",
+		Data: models.WebSocketErrorMessage{Error: errMsg},
+	}
+	if err := conn.WriteJSON(errMessage); err != nil {
+		logger.ErrorLog.Printf("Failed to send error message: %v", err)
+	}
+}
+
+// エラー送信後、接続をクローズする
+func (h *WebSocketHandler) sendErrorAndClose(conn *websocket.Conn, errMsg string) {
+	h.sendError(conn, errMsg)
+	conn.Close()
+	h.removeClient(conn)
+}
+
+// クライアントを安全に追加する
+func (h *WebSocketHandler) addClient(roomID string, conn *websocket.Conn) {
 	h.lock.Lock()
+	defer h.lock.Unlock()
+
 	if _, exists := h.clients[roomID]; !exists {
 		h.clients[roomID] = make(map[*websocket.Conn]bool)
 	}
 	h.clients[roomID][conn] = true
-	h.lock.Unlock()
+}
 
-	logger.InfoLog.Printf("Client joined room successfully.")
+// クライアントを安全に削除する
+func (h *WebSocketHandler) removeClient(conn *websocket.Conn) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
 
-	// メッセージを受信
-	for {
-		var receivedMessage models.WebSocketMessage
-		if err := conn.ReadJSON(&receivedMessage); err != nil {
-			logger.ErrorLog.Println("Read Error:", err)
+	for roomID, conns := range h.clients {
+		if _, exists := conns[conn]; exists {
+			delete(conns, conn)
+			logger.InfoLog.Printf("Removed client from room: %s", roomID)
+			if len(conns) == 0 {
+				delete(h.clients, roomID)
+				logger.InfoLog.Printf("Deleted empty room: %s", roomID)
+			}
 			break
 		}
-
-		// `type: message` のときのみ処理
-		if receivedMessage.Type == "message" {
-			receivedMessage.Data.CreatedAt = time.Now()
-			receivedMessage.Data.UpdatedAt = time.Now()
-
-			// メッセージを `roomId` のクライアントに送信
-			h.BroadcastMessage(roomID, receivedMessage.Data)
-		}
 	}
-
-	// クライアント切断時に `roomId` から削除
-	h.lock.Lock()
-	delete(h.clients[roomID], conn)
-	if len(h.clients[roomID]) == 0 {
-		delete(h.clients, roomID)
-	}
-	h.lock.Unlock()
-	logger.InfoLog.Println("Client disconnected from room successfully.")
 }
 
 // WebSocket メッセージをルームにブロードキャスト
-func (h *WebSocketHandler) BroadcastMessage(roomID string, chatMessage models.ChatMessages) {
+func (h *WebSocketHandler) BroadcastMessage(roomID string, chatMessage models.WebSocketChatMessage) {
 	logger.InfoLog.Println("Broadcasting message to room.")
 
 	message := models.WebSocketMessage{
