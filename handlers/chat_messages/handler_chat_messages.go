@@ -109,10 +109,13 @@ func (h *ChatMessagesHandler) CreateChatMessage(c echo.Context) error {
 
 	// WebSocketでメッセージを送信
 	h.WebSocketHandler.BroadcastMessage(roomId, models.WebSocketChatMessage{
-		RoomID:    roomId,
-		Message:   msg.Content,
-		CreatedAt: msg.CreatedAt,
-		UpdatedAt: msg.UpdatedAt,
+		UserID:     userId,
+		MessageID:  msg.ID,
+		Name:       "",
+		Content:    msg.Content,
+		CreatedAt:  msg.CreatedAt,
+		LikeCount:  0,
+		LikedUsers: []string{},
 	})
 
 	logger.InfoLog.Printf("Created chat_message successfully")
