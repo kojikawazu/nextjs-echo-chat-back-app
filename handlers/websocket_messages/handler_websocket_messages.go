@@ -97,10 +97,11 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 			}
 
 			chatMessage := models.WebSocketChatMessage{
-				RoomID:    roomID,
-				Message:   message,
+				UserID:    messageDataMap["user_id"].(string),
+				MessageID: messageDataMap["message_id"].(string),
+				Name:      messageDataMap["name"].(string),
+				Content:   message,
 				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
 			}
 
 			// メッセージをブロードキャスト
