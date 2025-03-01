@@ -41,6 +41,8 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	logger.InfoLog.Println("Received join message.")
+
 	// Dataを型安全にキャスト
 	joinDataMap, ok := msg.Data.(map[string]interface{})
 	if !ok {
@@ -48,10 +50,16 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		logger.ErrorLog.Printf("Invalid join data format: %v", msg.Data)
 		return
 	}
-	roomID, ok := joinDataMap["roomId"].(string)
+	roomIDRaw, exists := joinDataMap["room_id"]
+	if !exists {
+		h.sendErrorAndClose(conn, "room_id key missing in join data")
+		logger.ErrorLog.Printf("room_id key missing: %+v", joinDataMap)
+		return
+	}
+	roomID, ok := roomIDRaw.(string)
 	if !ok || roomID == "" {
-		h.sendErrorAndClose(conn, "roomId is required for join")
-		logger.ErrorLog.Printf("roomId is required for join: %v", joinDataMap)
+		h.sendErrorAndClose(conn, "room_id must be a non-empty string")
+		logger.ErrorLog.Printf("Invalid room_id value: %+v", roomIDRaw)
 		return
 	}
 
@@ -67,9 +75,13 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 			break
 		}
 
+		logger.InfoLog.Println("Received message.")
+
 		// メッセージの型に応じて処理を分岐
 		switch receivedMessage.Type {
 		case "message":
+			logger.InfoLog.Println("Received message.")
+
 			messageDataMap, ok := receivedMessage.Data.(map[string]interface{})
 			if !ok {
 				h.sendError(conn, "Invalid message format")
